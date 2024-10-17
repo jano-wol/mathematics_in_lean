@@ -58,13 +58,30 @@ example : x < |y| → x < y ∨ x < -y := by
 namespace MyAbs
 
 theorem le_abs_self (x : ℝ) : x ≤ |x| := by
-  sorry
+  rcases le_or_gt 0 x with h | h
+  . rw [abs_of_nonneg h]
+  . rw [abs_of_neg h]
+    linarith [h]
+
 
 theorem neg_le_abs_self (x : ℝ) : -x ≤ |x| := by
-  sorry
+  rcases le_or_gt 0 x with h | h
+  . rw [abs_of_nonneg h]
+    linarith [h]
+  . rw [abs_of_neg h]
+
 
 theorem abs_add (x y : ℝ) : |x + y| ≤ |x| + |y| := by
-  sorry
+  rcases le_or_gt 0 (x + y) with h | h
+  . calc
+      |x + y| = x + y := by rw [abs_of_nonneg h]
+      _ ≤ |x| + y := by rel [le_abs_self x]
+      _ ≤ |x| + |y| := by rel [le_abs_self y]
+  . calc
+      |x + y| = -(x + y) := by rw [abs_of_neg h]
+      _ = -x + (- y) := by ring
+      _ ≤ |x| + (- y) := by rel [neg_le_abs_self x]
+      _ ≤ |x| + |y| := by rel [neg_le_abs_self y]
 
 theorem lt_abs : x < |y| ↔ x < y ∨ x < -y := by
   sorry
@@ -125,4 +142,3 @@ example (P : Prop) : ¬¬P → P := by
 
 example (P Q : Prop) : P → Q ↔ ¬P ∨ Q := by
   sorry
-
