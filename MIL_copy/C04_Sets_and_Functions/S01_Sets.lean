@@ -283,10 +283,19 @@ section
 variable (ssubt : s ⊆ t)
 
 example (h₀ : ∀ x ∈ t, ¬Even x) (h₁ : ∀ x ∈ t, Prime x) : ∀ x ∈ s, ¬Even x ∧ Prime x := by
-  sorry
+  intro x xs
+  have ht := ssubt xs
+  constructor
+  apply h₀ x ht
+  apply h₁ x ht
 
 example (h : ∃ x ∈ s, ¬Even x ∧ Prime x) : ∃ x ∈ t, Prime x := by
-  sorry
+  rcases h with ⟨x, xs, _, prime_x⟩
+  use x
+  have ht := ssubt xs
+  constructor
+  apply ht
+  apply prime_x
 
 end
 
@@ -325,7 +334,34 @@ example : (⋂ i, A i ∩ B i) = (⋂ i, A i) ∩ ⋂ i, B i := by
 
 
 example : (s ∪ ⋂ i, A i) = ⋂ i, A i ∪ s := by
-  sorry
+  ext x
+  constructor
+  intro h1
+  simp only [mem_iInter]
+  intro i
+  by_cases hs : x ∈ s
+  apply mem_union_right
+  apply hs
+  have h2 : x ∈ s ∨ x ∈ ⋂ i, A i := h1
+  obtain h3 | h3 := h2
+  contradiction
+  have h4 : ∀ (i : I), x ∈ A i := mem_iInter.mp h3
+  have h5 := h4 i
+  apply mem_union_left
+  apply h5
+  intro h1
+  by_cases hs : x ∈ s
+  apply mem_union_left
+  apply hs
+  apply mem_union_right
+  simp only [mem_iInter]
+  intro i
+  have h6 := mem_iInter.mp h1 i
+  have h7 : x ∈ A i ∨ x ∈ s := h6
+  obtain h7 | h7 := h7
+  apply h7
+  contradiction
+
 
 def primes : Set ℕ :=
   { x | Nat.Prime x }
@@ -346,8 +382,16 @@ example : (⋂ p ∈ primes, { x | ¬p ∣ x }) ⊆ { x | x = 1 } := by
   apply Nat.exists_prime_and_dvd
 
 example : (⋃ p ∈ primes, { x | x ≤ p }) = univ := by
-  sorry
-
+  apply eq_univ_of_forall
+  intro x
+  have h1 := Nat.exists_infinite_primes x
+  obtain ⟨p, ⟨h2, h3⟩⟩ := h1
+  rw [mem_iUnion₂]
+  use p
+  simp
+  constructor
+  apply h3
+  apply h2
 end
 
 section
