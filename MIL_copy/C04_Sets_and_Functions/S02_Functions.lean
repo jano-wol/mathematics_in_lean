@@ -287,10 +287,24 @@ example : range exp = { y | y > 0 } := by
   rw [exp_log ypos]
 
 example : InjOn sqrt { x | x ≥ 0 } := by
-  sorry
+  intro x xpos y ypos
+  intro e
+  calc
+    x = √x * √x := by rw[mul_self_sqrt xpos]
+    _ = √y * √y := by rw [e]
+    _ = y := by rw [mul_self_sqrt ypos]
 
 example : InjOn (fun x ↦ x ^ 2) { x : ℝ | x ≥ 0 } := by
+  intro x xpos y ypos
+  intro e
+  simp at *
+  by_cases h : x = 0
   sorry
+  have h : x > 0 := by
+  calc
+    x = √x * √x := by rw[mul_self_sqrt xpos]
+    _ = √y * √y := by rw [e]
+    _ = y := by rw [mul_self_sqrt ypos]
 
 example : sqrt '' { x | x ≥ 0 } = { y | y ≥ 0 } := by
   sorry
