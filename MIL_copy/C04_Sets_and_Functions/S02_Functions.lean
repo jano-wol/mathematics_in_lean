@@ -208,19 +208,56 @@ example : s ∪ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∪ u) := by
 variable {I : Type*} (A : I → Set α) (B : I → Set β)
 
 example : (f '' ⋃ i, A i) = ⋃ i, f '' A i := by
-  sorry
+  ext r
+  simp at *
+  constructor
+  intro h
+  obtain ⟨t1, ⟨⟨i, hj⟩ , hi⟩ ⟩ := h
+  use i
+  use t1
+  intro h
+  obtain ⟨t1, ⟨i, ⟨j, k⟩⟩ ⟩ := h
+  use i
+  constructor
+  use t1
+  apply k
+
 
 example : (f '' ⋂ i, A i) ⊆ ⋂ i, f '' A i := by
-  sorry
+  intro r hr
+  simp at *
+  obtain ⟨t1, ⟨i, ⟨j, k⟩⟩ ⟩ := hr
+  intro j
+  have h := i j
+  use t1
+
 
 example (i : I) (injf : Injective f) : (⋂ i, f '' A i) ⊆ f '' ⋂ i, A i := by
-  sorry
+  intro r hr
+  simp at *
+  dsimp [Injective] at *
+  have h2 := hr i
+  obtain ⟨t1, ⟨_, j⟩ ⟩ := h2
+  have hr_all: ∀ (i : I), t1 ∈ A i := by
+    intro jj
+    have hj := hr jj
+    obtain ⟨qq, ⟨rr1, rr2⟩⟩ := hj
+    rw [← j] at rr2
+    have h3 := injf rr2
+    rw [← h3]
+    apply rr1
+  use t1
+
+
 
 example : (f ⁻¹' ⋃ i, B i) = ⋃ i, f ⁻¹' B i := by
-  sorry
+  ext r
+  simp at *
+
 
 example : (f ⁻¹' ⋂ i, B i) = ⋂ i, f ⁻¹' B i := by
-  sorry
+  ext r
+  simp at *
 
 example : InjOn f s ↔ ∀ x₁ ∈ s, ∀ x₂ ∈ s, f x₁ = f x₂ → x₁ = x₂ :=
   Iff.refl _
