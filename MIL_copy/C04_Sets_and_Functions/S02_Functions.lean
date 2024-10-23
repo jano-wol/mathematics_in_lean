@@ -298,19 +298,55 @@ example : InjOn (fun x ↦ x ^ 2) { x : ℝ | x ≥ 0 } := by
   intro x xpos y ypos
   intro e
   simp at *
-  by_cases h : x = 0
-  sorry
-  have h : x > 0 := by
-  calc
-    x = √x * √x := by rw[mul_self_sqrt xpos]
-    _ = √y * √y := by rw [e]
-    _ = y := by rw [mul_self_sqrt ypos]
+  rcases lt_trichotomy x 0 with xlt | xeq | xgt
+  linarith
+  rw [xeq] at e
+  have h : y * y = 0 := by
+    calc
+      y * y =  y ^ 2 := by ring
+      _ = 0 ^ 2 := by rw [← e]
+      _ = 0 := by ring
+  have h2 : y = 0 := by exact zero_eq_mul_self.mp (id (Eq.symm h))
+  rw [h2]
+  apply xeq
+  have h : (x - y) * (x + y) = 0 := by
+    calc
+      (x - y) * (x + y) = x ^ 2 - y ^ 2 := by ring
+      _ = y ^ 2 - y ^ 2 := by rw [e]
+      _ = 0 := by ring
+  have h2 : x - y = 0 ∨ x + y = 0 := mul_eq_zero.mp h
+  obtain h2 | h2 := h2
+  linarith[h2]
+  linarith
+
 
 example : sqrt '' { x | x ≥ 0 } = { y | y ≥ 0 } := by
-  sorry
+  ext y;
+  constructor
+  intro h
+  simp at *
+  obtain ⟨a, ⟨_, c⟩⟩ := h
+  rw [← c]
+  exact sqrt_nonneg a
+  intro h
+  simp at *
+  use y * y
+  constructor
+  exact Left.mul_nonneg h h
+  exact sqrt_mul_self h
+
 
 example : (range fun x ↦ x ^ 2) = { y : ℝ | y ≥ 0 } := by
-  sorry
+  ext y;
+  constructor
+  intro h
+  simp at *
+  obtain ⟨a, ⟨_, c⟩⟩ := h
+  exact sq_nonneg a
+  intro h
+  simp at *
+  use sqrt y
+  exact sq_sqrt h
 
 end
 
@@ -341,11 +377,41 @@ variable (f : α → β)
 
 open Function
 
-example : Injective f ↔ LeftInverse (inverse f) f :=
-  sorry
+example : Injective f ↔ LeftInverse (inverse f) f := by
+  dsimp [Injective]
+  dsimp [LeftInverse]
+  constructor
+  intro hh
+  intro x
+  apply hh
+  apply inverse_spec
+  use x
+  intro h x1 x2 e
+  rw [← h x1]
+  rw [← h x2]
+  rw [e]
 
-example : Surjective f ↔ RightInverse (inverse f) f :=
-  sorry
+
+
+
+
+
+
+
+example : Surjective f ↔ RightInverse (inverse f) f := by
+  dsimp [Surjective]
+  dsimp [Function.RightInverse]
+  constructor
+  intro hh
+  intro x
+  apply inverse_spec
+  have h2 := hh x
+  obtain ⟨r, hr⟩ := h2
+  use r
+  dsimp [LeftInverse]
+  intro h x1
+  have h3 := h x1
+  use inverse f x1
 
 end
 
@@ -361,10 +427,11 @@ theorem Cantor : ∀ f : α → Set α, ¬Surjective f := by
     intro h'
     have : j ∉ f j := by rwa [h] at h'
     contradiction
-  have h₂ : j ∈ S
-  sorry
-  have h₃ : j ∉ S
-  sorry
+  have h₂ : j ∈ S := by
+    apply h₁
+  have h₃ : j ∉ S := by
+    rw [← h]
+    apply h₁
   contradiction
 
 -- COMMENTS: TODO: improve this
