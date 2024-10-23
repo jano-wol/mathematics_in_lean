@@ -14,7 +14,7 @@ open Function
 open Set
 
 example : f ⁻¹' (u ∩ v) = f ⁻¹' u ∩ f ⁻¹' v := by
-  ext
+  ext x
   rfl
 
 example : f '' (s ∪ t) = f '' s ∪ f '' t := by
@@ -25,7 +25,11 @@ example : f '' (s ∪ t) = f '' s ∪ f '' t := by
     right
     use x, xt
   rintro (⟨x, xs, rfl⟩ | ⟨x, xt, rfl⟩)
-  · use x, Or.inl xs
+  · use x
+    constructor
+    apply Or.inl
+    apply xs
+    rfl
   use x, Or.inr xt
 
 example : s ⊆ f ⁻¹' (f '' s) := by
@@ -34,49 +38,172 @@ example : s ⊆ f ⁻¹' (f '' s) := by
   use x, xs
 
 example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v := by
-  sorry
+  constructor
+  intro h1
+  intro x
+  intro xs
+  have h2 : f x ∈ f '' s := mem_image_of_mem f xs
+  apply h1 h2
+  intro h1
+  intro x
+  intro xs
+  rcases xs with ⟨y, ys, fyeq⟩
+  rw [← fyeq]
+  apply h1 ys
+
+
+
 
 example (h : Injective f) : f ⁻¹' (f '' s) ⊆ s := by
-  sorry
+  dsimp [Injective] at *
+  intro x xs
+  rcases xs with ⟨t, ts, fte⟩
+  have h2 := h fte
+  rw [← h2]
+  apply ts
+
 
 example : f '' (f ⁻¹' u) ⊆ u := by
-  sorry
+  intro x hx
+  rcases hx with ⟨r, rs, rte⟩
+  have h2 : f r ∈ u := rs
+  rw [← rte]
+  apply h2
+
 
 example (h : Surjective f) : u ⊆ f '' (f ⁻¹' u) := by
-  sorry
+  intro x hx
+  dsimp [Surjective] at *
+  have h1 := h x
+  obtain ⟨r, ht⟩ := h1
+  use r
+  constructor
+  simp
+  rw [ht]
+  apply hx
+  apply ht
+
 
 example (h : s ⊆ t) : f '' s ⊆ f '' t := by
-  sorry
+  intro r hr
+  simp
+  simp at hr
+  obtain ⟨q, hq⟩ := hr
+  obtain ⟨hq1, hq2⟩ := hq
+  use q
+  constructor
+  apply h hq1
+  apply hq2
 
 example (h : u ⊆ v) : f ⁻¹' u ⊆ f ⁻¹' v := by
-  sorry
+  intro r hr
+  simp at *
+  apply h hr
 
 example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := by
-  sorry
+  ext x
+  constructor
+  intro hr
+  simp at *
+  apply hr
+  intro hr
+  simp at *
+  apply hr
+
 
 example : f '' (s ∩ t) ⊆ f '' s ∩ f '' t := by
-  sorry
+  intro r hr
+  simp at *
+  obtain ⟨q , ⟨⟨hq3, hq4⟩ , hq2⟩⟩ := hr
+  constructor
+  use q
+  use q
+
 
 example (h : Injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) := by
-  sorry
+  intro r hr
+  dsimp [Injective] at h
+  simp at *
+  obtain ⟨⟨r3, ⟨hq5, hq6⟩⟩ , ⟨r2, ⟨hq3, hq4⟩⟩⟩ := hr
+  use r2
+  constructor
+  constructor
+  rw [← hq6] at hq4
+  have h1 := h hq4
+  rw [h1]
+  apply hq5
+  apply hq3
+  apply hq4
+
+
 
 example : f '' s \ f '' t ⊆ f '' (s \ t) := by
-  sorry
+  intro r hr
+  simp at *
+  obtain ⟨⟨r3, ⟨hq5, hq6⟩⟩ , r2⟩ := hr
+  use r3
+  constructor
+  constructor
+  apply hq5
+  intro cc
+  have h2 := r2 r3 cc
+  contradiction
+  apply hq6
+
 
 example : f ⁻¹' u \ f ⁻¹' v ⊆ f ⁻¹' (u \ v) := by
-  sorry
+  intro r hr
+  simp at *
+  apply hr
 
 example : f '' s ∩ v = f '' (s ∩ f ⁻¹' v) := by
-  sorry
+  ext r
+  simp at *
+  constructor
+  intro hx
+  obtain ⟨⟨r3, ⟨hq5, hq6⟩⟩, r2⟩ := hx
+  use r3
+  constructor
+  constructor
+  apply hq5
+  rw [hq6]
+  apply r2
+  apply hq6
+  intro hx
+  obtain ⟨h, ⟨⟨t3, t4⟩ , t2⟩ ⟩ := hx
+  constructor
+  use h
+  rw [← t2]
+  apply t4
+
+
 
 example : f '' (s ∩ f ⁻¹' u) ⊆ f '' s ∩ u := by
-  sorry
+  intro r hr
+  simp at *
+  obtain ⟨h, ⟨⟨t3, t4⟩ , t2⟩ ⟩ := hr
+  constructor
+  use h
+  rw [← t2]
+  apply t4
+
 
 example : s ∩ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∩ u) := by
-  sorry
+  intro r hr
+  simp at *
+  obtain ⟨h, t2⟩ := hr
+  constructor
+  use r
+  apply t2
 
 example : s ∪ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∪ u) := by
-  sorry
+  intro r hr
+  simp at *
+  obtain h | h := hr
+  left
+  use r
+  right
+  apply h
 
 variable {I : Type*} (A : I → Set α) (B : I → Set β)
 
