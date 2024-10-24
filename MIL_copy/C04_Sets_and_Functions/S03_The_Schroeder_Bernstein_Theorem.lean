@@ -28,10 +28,15 @@ theorem sb_right_inv {x : α} (hx : x ∉ sbSet f g) : g (invFun g x) = x := by
     rw [sbSet, mem_iUnion]
     use 0
     rw [sbAux, mem_diff]
-    sorry
+    constructor
+    apply trivial
+    apply hx
   have : ∃ y, g y = x := by
-    sorry
-  sorry
+    simp at *
+    apply this
+  obtain ⟨r, hr⟩ := this
+  apply invFun_eq
+  use r
 
 theorem sb_injective (hf : Injective f) : Injective (sbFun f g) := by
   set A := sbSet f g with A_def
@@ -50,15 +55,30 @@ theorem sb_injective (hf : Injective f) : Injective (sbFun f g) := by
       rw [if_pos x₁A, if_neg x₂nA] at hxeq
       rw [A_def, sbSet, mem_iUnion] at x₁A
       have x₂eq : x₂ = g (f x₁) := by
-        sorry
+        rw [hxeq]
+        rw [sb_right_inv f g]
+        apply x₂nA
       rcases x₁A with ⟨n, hn⟩
       rw [A_def, sbSet, mem_iUnion]
       use n + 1
       simp [sbAux]
       exact ⟨x₁, hn, x₂eq.symm⟩
-    sorry
-  push_neg  at xA
-  sorry
+    rw [if_pos x₁A, if_pos x₂A] at hxeq
+    apply hf hxeq
+  push_neg at xA
+  rcases xA with ⟨xA1, xA2⟩
+  rw [if_neg xA1, if_neg xA2] at hxeq
+  have hr2 : g (invFun g x₁) = g (invFun g x₂) := by
+    rw [hxeq]
+  have hr3 : g (invFun g x₁) = x₁ := by
+    rw [sb_right_inv f g]
+    apply xA1
+  have hr4 : g (invFun g x₂) = x₂ := by
+    rw [sb_right_inv f g]
+    apply xA2
+  rw [← hr3]
+  rw [← hr4]
+  apply hr2
 
 theorem sb_surjective (hg : Injective g) : Surjective (sbFun f g) := by
   set A := sbSet f g with A_def
@@ -77,8 +97,9 @@ theorem sb_surjective (hg : Injective g) : Surjective (sbFun f g) := by
       exact ⟨n, xmem⟩
     simp only [h_def, sbFun, if_pos this]
     exact hg hx
-  sorry
-
+  use (g y)
+  simp only [h_def, sbFun, if_neg gyA]
+  apply leftInverse_invFun hg
 end
 
 theorem schroeder_bernstein {f : α → β} {g : β → α} (hf : Injective f) (hg : Injective g) :
