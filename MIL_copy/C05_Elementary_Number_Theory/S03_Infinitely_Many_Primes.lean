@@ -15,7 +15,9 @@ theorem two_le {m : ℕ} (h0 : m ≠ 0) (h1 : m ≠ 1) : 2 ≤ m := by
 example {m : ℕ} (h0 : m ≠ 0) (h1 : m ≠ 1) : 2 ≤ m := by
   by_contra h
   push_neg at h
-  interval_cases m <;> contradiction
+  interval_cases m
+  contradiction
+  contradiction
 
 example {m : ℕ} (h0 : m ≠ 0) (h1 : m ≠ 1) : 2 ≤ m := by
   by_contra h
@@ -42,21 +44,45 @@ theorem exists_prime_factor {n : Nat} (h : 2 ≤ n) : ∃ p : Nat, p.Prime ∧ p
     use p, pp
     apply pdvd.trans mdvdn
 
+
 theorem primes_infinite : ∀ n, ∃ p > n, Nat.Prime p := by
   intro n
   have : 2 ≤ Nat.factorial (n + 1) + 1 := by
-    sorry
+    have r: 1 ≤ Nat.factorial (n + 1) := by
+      rw [Nat.factorial]
+      have r1 : 1 ≤ n.succ := by exact NeZero.one_le
+      have r2 : 1 ≤ n.factorial := by
+        induction' n with n ih
+        rw [Nat.factorial]
+        have h : 1 ≤ n.succ := by exact NeZero.one_le
+        have h2 := ih h
+        rw [Nat.factorial]
+        calc
+          n.succ * n.factorial ≥ 1 * n.factorial := by rel [h]
+          _ ≥ 1 * 1 := by rel [h2]
+          _ = 1 := by ring
+      calc
+        n.succ * n.factorial ≥ 1 * n.factorial := by rel [r1]
+        _ ≥ 1 * 1 := by rel [r2]
+        _ = 1 := by ring
+    calc
+      (n + 1).factorial + 1 ≥ 1 + 1 := by rel [r]
+      _ = 2 := by ring
   rcases exists_prime_factor this with ⟨p, pp, pdvd⟩
   refine ⟨p, ?_, pp⟩
   show p > n
   by_contra ple
   push_neg  at ple
   have : p ∣ Nat.factorial (n + 1) := by
-    sorry
+    refine Nat.dvd_factorial ?_ ?_
+    exact Nat.Prime.pos pp
+    linarith
   have : p ∣ 1 := by
-    sorry
+    exact (Nat.dvd_add_iff_right this).mpr pdvd
   show False
-  sorry
+  have hhh : p ≤ 1 := by exact (Nat.Prime.dvd_factorial pp).mp this
+  have hhhh : 2 ≤ p := by exact Nat.Prime.two_le pp
+  linarith
 open Finset
 
 section
@@ -224,4 +250,3 @@ theorem primes_mod_4_eq_3_infinite : ∀ n, ∃ p > n, Nat.Prime p ∧ p % 4 = 3
   have : p = 3 := by
     sorry
   contradiction
-
