@@ -3,6 +3,9 @@ import Mathlib.Data.Real.Basic
 
 namespace C06S02
 
+#check Group
+#print Group
+
 structure Group₁ (α : Type*) where
   mul : α → α → α
   one : α
@@ -48,14 +51,21 @@ def permGroup {α : Type*} : Group₁ (Equiv.Perm α)
   mul f g := Equiv.trans g f
   one := Equiv.refl α
   inv := Equiv.symm
-  mul_assoc f g h := (Equiv.trans_assoc _ _ _).symm
+  mul_assoc _ _ _ := (Equiv.trans_assoc _ _ _).symm
   one_mul := Equiv.trans_refl
   mul_one := Equiv.refl_trans
   inv_mul_cancel := Equiv.self_trans_symm
 
 structure AddGroup₁ (α : Type*) where
-  (add : α → α → α)
-  -- fill in the rest
+  add : α → α → α
+  zero : α
+  neg : α → α
+  add_assoc : ∀ x y z : α, add (add x y) z = add x (add y z)
+  add_zero : ∀ x : α, add x zero = x
+  zero_add : ∀ x : α, add zero x = x
+  neg_add_cancel : ∀ x : α, add (neg x) x = zero
+
+
 @[ext]
 structure Point where
   x : ℝ
@@ -67,11 +77,20 @@ namespace Point
 def add (a b : Point) : Point :=
   ⟨a.x + b.x, a.y + b.y, a.z + b.z⟩
 
-def neg (a : Point) : Point := sorry
+def neg (a : Point) : Point :=
+  ⟨-a.x, -a.y, -a.z⟩
 
-def zero : Point := sorry
+def zero : Point :=
+  ⟨0, 0, 0⟩
 
-def addGroupPoint : AddGroup₁ Point := sorry
+def addGroupPoint : AddGroup₁ Point where
+  add := Point.add
+  zero := Point.zero
+  neg := Point.neg
+  add_assoc := by simp [Point.add, add_assoc]
+  add_zero := by simp [Point.add, Point.zero]
+  zero_add := by simp [Point.add, Point.zero]
+  neg_add_cancel := by simp [Point.neg, Point.add, Point.zero]
 
 end Point
 
@@ -107,7 +126,7 @@ instance {α : Type*} : Group₂ (Equiv.Perm α) where
   mul f g := Equiv.trans g f
   one := Equiv.refl α
   inv := Equiv.symm
-  mul_assoc f g h := (Equiv.trans_assoc _ _ _).symm
+  mul_assoc _ _ _ := (Equiv.trans_assoc _ _ _).symm
   one_mul := Equiv.trans_refl
   mul_one := Equiv.refl_trans
   inv_mul_cancel := Equiv.self_trans_symm
@@ -170,4 +189,32 @@ end
 
 class AddGroup₂ (α : Type*) where
   add : α → α → α
-  -- fill in the rest
+  zero : α
+  neg : α → α
+  add_assoc : ∀ x y z : α, add (add x y) z = add x (add y z)
+  add_zero : ∀ x : α, add x zero = x
+  zero_add : ∀ x : α, add x zero = x
+  neg_add_cancel : ∀ x : α, add (neg x) x = zero
+
+instance hasAddAddGroup₂ {α : Type*} [AddGroup₂ α] : Add α :=
+  ⟨AddGroup₂.add⟩
+
+instance hasZeroAddGroup₂ {α : Type*} [AddGroup₂ α] : Zero α :=
+  ⟨AddGroup₂.zero⟩
+
+instance hasNegAddGroup₂ {α : Type*} [AddGroup₂ α] : Neg α :=
+  ⟨AddGroup₂.neg⟩
+
+instance : AddGroup₂ Point where
+  add := Point.add
+  zero := Point.zero
+  neg := Point.neg
+  add_assoc := by simp [Point.add, add_assoc]
+  add_zero := by simp [Point.add, Point.zero]
+  zero_add := by simp [Point.add, Point.zero]
+  neg_add_cancel := by simp [Point.add, Point.neg, Point.zero]
+
+section
+variable (x y : Point)
+
+#check x + -y + 0

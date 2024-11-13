@@ -180,7 +180,56 @@ end Int
 
 theorem sq_add_sq_eq_zero {α : Type*} [LinearOrderedRing α] (x y : α) :
     x ^ 2 + y ^ 2 = 0 ↔ x = 0 ∧ y = 0 := by
-  sorry
+  have aux: x ^ 2 = 0 ↔ x = 0 := by exact sq_eq_zero_iff
+  have aux2: x ^ 2 ≥ 0 := by exact sq_nonneg x
+  constructor
+  intro h
+  rcases lt_trichotomy (x ^ 2) 0 with h1 | h2 | h3
+  have r : (0 : α)  < 0 := by
+    calc
+      0 ≤ x ^ 2 := aux2
+      _ < 0 := h1
+  have h3 := lt_irrefl 0 r
+  exact False.elim h3
+  have h3 := aux.mp h2
+  constructor
+  assumption
+  rcases lt_trichotomy (y ^ 2) 0 with y1 | y2 | y3
+  have r : (0 : α)  < 0 := by
+    calc
+      0 ≤ y ^ 2 := sq_nonneg y
+      _ < 0 := y1
+  have h3 := lt_irrefl 0 r
+  exact False.elim h3
+  have h3 := sq_eq_zero_iff.mp y2
+  assumption
+  have r : (0 : α)  < 0 := by
+    calc
+      0 < y ^ 2 := y3
+      _ = 0 + y ^ 2 := by exact Eq.symm (AddZeroClass.zero_add (y ^ 2))
+      _ ≤  x ^ 2 + y ^ 2 := by rel [aux2]
+      _ = 0 := h
+  have h3 := lt_irrefl 0 r
+  exact False.elim h3
+  have r : (0 : α)  < 0 := by
+    calc
+      0 < x ^ 2 := h3
+      _ = 0 + x ^ 2 := by exact Eq.symm (AddZeroClass.zero_add (x ^ 2))
+      _ ≤  y ^ 2 + x ^ 2 := by rel [sq_nonneg y]
+      _ = x ^ 2 + y ^ 2 := by exact AddCommMagma.add_comm (y ^ 2) (x ^ 2)
+      _ = 0 := h
+  have h3 := lt_irrefl 0 r
+  exact False.elim h3
+  rintro ⟨h1, h2⟩
+  have aux3 : (0 : α) ^ 2 = 0 := by exact sq_eq_zero_iff.mpr rfl
+  calc
+    x ^ 2 + y ^ 2 = 0 ^ 2 + 0 ^ 2 := by rw [h1, h2]
+    _ = 0 + 0 := by rw [aux3]
+    _ = 0 := by exact AddZeroClass.zero_add 0
+
+
+
+
 namespace GaussInt
 
 def norm (x : GaussInt) :=
