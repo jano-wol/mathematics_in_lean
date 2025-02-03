@@ -53,6 +53,26 @@ instance [Monoid M] : SubmonoidClass₁ (Submonoid₁ M) M where
   one_mem := Submonoid₁.one_mem
 
 
+
+@[ext]
+structure Subgroup₁ (G : Type) [Group G] extends Submonoid₁ G where
+  inv_mem: a ∈ carrier → a⁻¹ ∈ carrier
+
+instance [Group G] : SetLike (Subgroup₁ G) G where
+  coe := fun H ↦ H.toSubmonoid₁.carrier
+  coe_injective' _ _ := Subgroup₁.ext
+
+instance [Group G] (H : Subgroup₁ G) : Group H :=
+{ SubMonoid₁Monoid H.toSubmonoid₁ with
+  inv := fun x ↦ ⟨x⁻¹, H.inv_mem x.property⟩
+  inv_mul_cancel := fun x ↦ SetCoe.ext (inv_mul_cancel (x : G)) }
+
+class SubgroupClass₁ (S : Type) (G : Type) [Group G] [SetLike S G]
+    extends SubmonoidClass₁ S G  : Prop where
+  inv_mem : ∀ (s : S) {a : G}, a ∈ s → a⁻¹ ∈ s
+
+
+
 instance [Monoid M] : Inf (Submonoid₁ M) :=
   ⟨fun S₁ S₂ ↦
     { carrier := S₁ ∩ S₂
@@ -69,7 +89,10 @@ def Submonoid.Setoid [CommMonoid M] (N : Submonoid M) : Setoid M  where
     refl := fun x ↦ ⟨1, N.one_mem, 1, N.one_mem, rfl⟩
     symm := fun ⟨w, hw, z, hz, h⟩ ↦ ⟨z, hz, w, hw, h.symm⟩
     trans := by
-      sorry
+      rintro a b c ⟨w, hw, z, hz, h⟩ ⟨w', hw', z', hz', h'⟩
+      refine ⟨w*w', N.mul_mem hw hw', z*z', N.mul_mem hz hz', ?_⟩
+      rw [← mul_assoc, h, mul_comm b, mul_assoc, h', ← mul_assoc, mul_comm z, mul_assoc]
+
   }
 
 instance [CommMonoid M] : HasQuotient M (Submonoid M) where
@@ -79,12 +102,19 @@ def QuotientMonoid.mk [CommMonoid M] (N : Submonoid M) : M → M ⧸ N := Quotie
 
 instance [CommMonoid M] (N : Submonoid M) : Monoid (M ⧸ N) where
   mul := Quotient.map₂' (· * ·) (by
-      sorry
+    rintro a₁ b₁ ⟨w, hw, z, hz, ha⟩ a₂ b₂ ⟨w', hw', z', hz', hb⟩
+    refine ⟨w*w', N.mul_mem hw hw', z*z', N.mul_mem hz hz', ?_⟩
+    rw [mul_comm w, ← mul_assoc, mul_assoc a₁, hb, mul_comm, ← mul_assoc, mul_comm w, ha,
+        mul_assoc, mul_comm z, mul_assoc b₂, mul_comm z', mul_assoc]
         )
   mul_assoc := by
-      sorry
+    rintro ⟨a⟩ ⟨b⟩ ⟨c⟩
+    apply Quotient.sound
+    dsimp only
+    rw [mul_assoc]
+    apply @Setoid.refl M N.Setoid
   one := QuotientMonoid.mk N 1
   one_mul := by
-      sorry
+    rintro ⟨a⟩ ; apply Quotient.sound ; dsimp only ; rw [one_mul] ; apply @Setoid.refl M N.Setoid
   mul_one := by
-      sorry
+    rintro ⟨a⟩ ; apply Quotient.sound ; dsimp only ; rw [mul_one] ; apply @Setoid.refl M N.Setoid
