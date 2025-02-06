@@ -191,11 +191,26 @@ noncomputable example : (V ⧸ LinearMap.ker φ) ≃ₗ[K] range φ := φ.quotKe
 
 open Submodule
 
-#check Submodule.map_comap_eq
-#check Submodule.comap_map_eq
+#check Submodule.map_comap_eq -- (f : F) (q : Submodule R₂ M₂) : map f (comap f q) = range f ⊓ q
+#check Submodule.comap_map_eq -- (f : F) (p : Submodule R M) : comap f (map f p) = p ⊔ LinearMap.ker f
 
 example : Submodule K (V ⧸ E) ≃ { F : Submodule K V // E ≤ F } where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
+  toFun F :=
+    let P := Submodule.comap E.mkQ F;
+    have hP : E ≤ P := by
+      -- Show that the comap of `F` is contained in `E` using the kernel.
+      rw [← E.ker_mkQ, ← Submodule.comap_bot]
+      apply Submodule.comap_mono
+      exact bot_le
+    ⟨P, hP⟩
+  invFun P := map E.mkQ P
+  left_inv P := by
+    dsimp
+    rw [Submodule.map_comap_eq, E.range_mkQ]
+    exact top_inf_eq P
+  right_inv := by
+    intro P
+    ext x
+    dsimp only
+    rw [Submodule.comap_map_eq, E.ker_mkQ, sup_of_le_left]
+    exact P.2
