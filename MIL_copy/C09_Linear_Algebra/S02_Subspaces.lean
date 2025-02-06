@@ -36,12 +36,23 @@ def preimage {W : Type*} [AddCommGroup W] [Module K W] (φ : V →ₗ[K] W) (H :
   carrier := φ ⁻¹' H
   zero_mem' := by
     dsimp
-    sorry
+    rw [Set.mem_preimage]
+    simp
   add_mem' := by
-    sorry
+    intro v1 v2 h1 h2
+    rw [Set.mem_preimage] at *
+    have h : φ (v1 + v2) = φ (v1) + φ (v2) := by exact LinearMap.map_add φ v1 v2
+    rw [h]
+    exact add_mem h1 h2
   smul_mem' := by
     dsimp
-    sorry
+    intro c v h
+    rw [Set.mem_preimage] at *
+    rw [LinearMap.map_smul φ]
+    have j := H.smul_mem c h
+    simp
+    apply j
+
 
 example (U : Submodule K V) : Module K U := inferInstance
 
@@ -101,7 +112,20 @@ example {S T : Submodule K V} {x : V} (h : x ∈ S ⊔ T) :
     ∃ s ∈ S, ∃ t ∈ T, x = s + t  := by
   rw [← S.span_eq, ← T.span_eq, ← Submodule.span_union] at h
   apply Submodule.span_induction h (p := fun x ↦ ∃ s ∈ S, ∃ t ∈ T, x = s + t)
-  sorry
+  · rintro x (hx|hx)
+    · use x, hx, 0, T.zero_mem
+      module
+    · use 0, S.zero_mem, x, hx
+      module
+  · use 0, S.zero_mem, 0, T.zero_mem
+    module
+  · rintro - - ⟨s, hs, t, ht, rfl⟩ ⟨s', hs', t', ht', rfl⟩
+    use s + s', S.add_mem hs hs', t + t', T.add_mem ht ht'
+    module
+  · rintro a - ⟨s, hs, t, ht, rfl⟩
+    use a • s, S.smul_mem a hs, a • t, T.smul_mem a ht
+    module
+
 
 section
 
@@ -126,12 +150,27 @@ example : Injective φ ↔ ker φ = ⊥ := ker_eq_bot.symm
 example : Surjective φ ↔ range φ = ⊤ := range_eq_top.symm
 
 #check Submodule.mem_map_of_mem
-#check Submodule.mem_map
-#check Submodule.mem_comap
+#check Submodule.mem_map --  x ∈ map f p ↔ ∃ y, y ∈ p ∧ f y = x
+#check Submodule.mem_comap -- x ∈ comap f p ↔ f x ∈ p
 
 example (E : Submodule K V) (F : Submodule K W) :
     Submodule.map φ E ≤ F ↔ E ≤ Submodule.comap φ F := by
-  sorry
+  constructor
+  intro h
+  intro e he
+  simp
+  have key : φ e ∈ Submodule.map φ E := by exact Submodule.mem_map_of_mem he
+  exact h key
+  intro h
+  intro x hx
+  have key : ∃ y, y ∈ E ∧ φ y = x := Submodule.mem_map.2 hx
+  obtain ⟨t, ⟨ht, htt⟩⟩ := key
+  have key2 : t ∈ Submodule.comap φ F := by exact h ht
+  have key3 := Submodule.mem_comap.1 key2
+  rw [htt] at key3
+  apply key3
+
+
 
 variable (E : Submodule K V)
 
