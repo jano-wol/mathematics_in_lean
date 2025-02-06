@@ -80,23 +80,44 @@ open Ideal Quotient Function
 #check Pi.ringHom
 #check ker_Pi_Quotient_mk
 
+
+def chineseMapHelp (I : ι → Ideal R) : R →+* Π i, R ⧸ I i :=
+  Pi.ringHom (fun (i : ι) ↦ Ideal.Quotient.mk (I i))
+
+def chineseMapHelp2 (I : ι → Ideal R) : ∀ a : R, a ∈ ⨅ i, I i → chineseMapHelp I a = 0 := by
+  simp[chineseMapHelp]
+  intro a h2
+  have help := ker_Pi_Quotient_mk I
+  have help3 : a ∈ ⨅ i, I i := by
+    exact (Submodule.mem_iInf I).mpr h2
+  have help2 : a ∈ RingHom.ker (Pi.ringHom fun i => mk (I i)) := by
+    rw [help]
+    exact help3
+  apply help2
+
+
+
 /-- The homomorphism from ``R ⧸ ⨅ i, I i`` to ``Π i, R ⧸ I i`` featured in the Chinese
   Remainder Theorem. -/
 def chineseMap (I : ι → Ideal R) : (R ⧸ ⨅ i, I i) →+* Π i, R ⧸ I i :=
-  sorry
+  Ideal.Quotient.lift (⨅ i, I i) (chineseMapHelp I) (chineseMapHelp2 I)
 
 lemma chineseMap_mk (I : ι → Ideal R) (x : R) :
     chineseMap I (Quotient.mk _ x) = fun i : ι ↦ Ideal.Quotient.mk (I i) x :=
-  sorry
+  rfl
 
 lemma chineseMap_mk' (I : ι → Ideal R) (x : R) (i : ι) :
     chineseMap I (mk _ x) i = mk (I i) x :=
-  sorry
+  rfl
 
 #check injective_lift_iff
 
 lemma chineseMap_inj (I : ι → Ideal R) : Injective (chineseMap I) := by
-  sorry
+  rw [chineseMap]
+  rw [injective_lift_iff]
+  rw [chineseMapHelp]
+  rw [ker_Pi_Quotient_mk]
+
 
 #check IsCoprime
 #check isCoprime_iff_add
@@ -117,11 +138,30 @@ theorem isCoprime_Inf {I : Ideal R} {J : ι → Ideal R} {s : Finset ι}
   | @insert i s _ hs =>
       rw [Finset.iInf_insert, inf_comm, one_eq_top, eq_top_iff, ← one_eq_top]
       set K := ⨅ j ∈ s, J j
+
+      have hf_low : ∀ j ∈ s, I + J j = 1 := by
+        intro jj jk
+        have hjj : jj ∈ insert i s := by
+          exact Finset.mem_insert_of_mem jk
+        have next := hf jj hjj
+        apply next
       calc
-        1 = I + K                  := sorry
-        _ = I + K * (I + J i)      := sorry
-        _ = (1 + K) * I + K * J i  := sorry
-        _ ≤ I + K ⊓ J i            := sorry
+        1 = I + K                  := by
+          have goal : I + K = 1 := by
+            apply hs
+            apply hf_low
+          exact id (Eq.symm goal)
+        _ = I + K * (I + J i)      := by
+          have help : I + J i = 1 := by
+            apply hf i
+            exact Finset.mem_insert_self i s
+          rw [help]
+          ring
+        _ = (1 + K) * I + K * J i  := by ring
+        _ ≤ I + K ⊓ J i            := by gcongr ; apply mul_le_left ; apply mul_le_inf
+
+
+
 lemma chineseMap_surj [Fintype ι] {I : ι → Ideal R}
     (hI : ∀ i j, i ≠ j → IsCoprime (I i) (I j)) : Surjective (chineseMap I) := by
   classical
@@ -130,17 +170,41 @@ lemma chineseMap_surj [Fintype ι] {I : ι → Ideal R}
   have key : ∀ i, ∃ e : R, mk (I i) e = 1 ∧ ∀ j, j ≠ i → mk (I j) e = 0 := by
     intro i
     have hI' : ∀ j ∈ ({i} : Finset ι)ᶜ, IsCoprime (I i) (I j) := by
-      sorry
-    sorry
+      intro jj hh
+      apply hI
+      intro h_eq
+      rw [h_eq] at hh
+      simp at hh
+    rcases isCoprime_iff_exists.mp (isCoprime_Inf hI') with ⟨u, hu, e, he, hue⟩
+    replace he : ∀ j, j ≠ i → e ∈ I j := by simpa using he
+    use e
+    constructor
+    simp [eq_sub_of_add_eq' hue, map_sub, eq_zero_iff_mem.mpr hu]
+    exact fun j hj ↦ eq_zero_iff_mem.mpr (he j hj)
   choose e he using key
   use mk _ (∑ i, f i * e i)
-  sorry
+  ext i
+  rw [chineseMap_mk', map_sum, Fintype.sum_eq_single i]
+  obtain ⟨p, _⟩ := he i
+  have hI'' := hf i
+  have helpme : (mk (I i)) (f i * e i) = (mk (I i)) (f i) * (mk (I i)) (e i) := by rfl
+  rw [helpme]
+  rw [hI'']
+  rw [p]
+  ring
+  intro x hx
+  obtain ⟨_, q⟩ := he x
+  have hI'' := q i hx.symm
+  have helpme : (mk (I i)) (f x * e x) = (mk (I i)) (f x) * (mk (I i)) (e x) := by rfl
+  rw [helpme]
+  rw [hI'']
+  ring
+
 
 noncomputable def chineseIso [Fintype ι] (f : ι → Ideal R)
     (hf : ∀ i j, i ≠ j → IsCoprime (f i) (f j)) : (R ⧸ ⨅ i, f i) ≃+* Π i, R ⧸ f i :=
-  { Equiv.ofBijective _ ⟨chineseMap_inj f, chineseMap_surj hf⟩,
-    chineseMap f with }
-
+      { Equiv.ofBijective _ ⟨chineseMap_inj f, chineseMap_surj hf⟩,
+        chineseMap f with }
 end
 
 example {R A : Type*} [CommRing R] [Ring A] [Algebra R A] (r r' : R) (a : A) :
