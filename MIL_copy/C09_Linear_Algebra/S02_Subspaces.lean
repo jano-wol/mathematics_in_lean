@@ -195,14 +195,11 @@ open Submodule
 #check Submodule.comap_map_eq -- (f : F) (p : Submodule R M) : comap f (map f p) = p ⊔ LinearMap.ker f
 
 example : Submodule K (V ⧸ E) ≃ { F : Submodule K V // E ≤ F } where
-  toFun F :=
-    let P := Submodule.comap E.mkQ F;
-    have hP : E ≤ P := by
-      -- Show that the comap of `F` is contained in `E` using the kernel.
-      rw [← E.ker_mkQ, ← Submodule.comap_bot]
-      apply Submodule.comap_mono
-      exact bot_le
-    ⟨P, hP⟩
+  toFun F := {
+    val := Submodule.comap E.mkQ F
+    property := by
+      exact le_comap_mkQ E F
+  }
   invFun P := map E.mkQ P
   left_inv P := by
     dsimp
